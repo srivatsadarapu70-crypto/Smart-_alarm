@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Clock Alarm</title>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
+
+body {
+  min-height:100vh;
+  background:#ffffff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.clock-card {
+  width:100%;
+  max-width:500px;
+  background:#f4f4f4;
+  padding:25px;
+  border-radius:20px;
+  text-align:center;
+}
+
+.clock-digits {
+  font-size:3rem;
+  font-weight:bold;
+}
+
+.alarm-panel {
+  margin:20px 0;
+}
+
+.btn {
+  padding:10px 15px;
+  border:none;
+  background:#333;
+  color:white;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.alarm-list-item {
+  margin:10px 0;
+  padding:10px;
+  background:#eee;
+  display:flex;
+  justify-content:space-between;
+}
+
+.modal-ring {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.7);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  visibility:hidden;
+}
+
+.modal-ring.active { visibility:visible; }
+
+.modal-content {
+  background:white;
+  padding:20px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="clock-card">
+
+<div>
+  <div class="clock-digits" id="liveClock">--:--:--</div>
+  <div id="ampmBadge"></div>
+  <div id="weekdaySpan"></div>
+  <div id="dateSpan"></div>
+</div>
+
+<div class="alarm-panel">
+  <input type="time" id="alarmTimeInput">
+  <button id="addAlarmBtn" class="btn">Add Alarm</button>
+</div>
+
+<div>
+  My Alarms (<span id="alarmCount">0</span>)
+  <button id="clearAllAlarms" class="btn">Clear</button>
+</div>
+
+<div id="alarmsListContainer"></div>
+
+</div>
+
+<div id="alarmModal" class="modal-ring">
+  <div class="modal-content">
+    <h2>Alarm Ringing</h2>
+    <p id="modalAlarmTime"></p>
+    <button id="stopRingBtn" class="btn">Stop</button>
+  </div>
+</div>
+
+<script>
+let alarms = [];
+
+const alarmInput = document.getElementById("alarmTimeInput");
+const addBtn = document.getElementById("addAlarmBtn");
+const listContainer = document.getElementById("alarmsListContainer");
+const alarmCount = document.getElementById("alarmCount");
+const modal = document.getElementById("alarmModal");
+const modalTime = document.getElementById("modalAlarmTime");
+const stopBtn = document.getElementById("stopRingBtn");
+
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+
+  document.getElementById('liveClock').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('ampmBadge').textContent = hh >= 12 ? 'PM' : 'AM';
+
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('weekdaySpan').textContent = days[now.getDay()];
+  document.getElementById('dateSpan').textContent = now.toLocaleDateString();
+
+  checkAlarms(hh + ":" + mm);
+}
+
+function addAlarm() {
+  const time = alarmInput.value;
+  if (!time) return;
+
+  if (alarms.includes(time)) {
+    alert("Alarm already set!");
+    return;
+  }
+
+  alarms.push(time);
+  renderAlarms();
+}
+
+function renderAlarms() {
+  listContainer.innerHTML = "";
+
+  if (alarms.length === 0) {
+    listContainer.innerHTML = "No alarms yet";
+    alarmCount.textContent = 0;
+    return;
+  }
+
+  alarms.forEach((alarm, index) => {
+    const div = document.createElement("div");
+    div.className = "alarm-list-item";
+
+    div.innerHTML = `
+      <span>${alarm}</span>
+      <button class="btn" onclick="deleteAlarm(${index})">Delete</button>
+    `;
+
+    listContainer.appendChild(div);
+  });
+
+  alarmCount.textContent = alarms.length;
+}
+
+function deleteAlarm(index) {
+  alarms.splice(index, 1);
+  renderAlarms();
+}
+
+function checkAlarms(currentTime) {
+  if (alarms.includes(currentTime)) {
+    modal.classList.add("active");
+    modalTime.textContent = currentTime;
+  }
+}
+
+stopBtn.onclick = () => modal.classList.remove("active");
+
+addBtn.onclick = addAlarm;
+
+document.getElementById("clearAllAlarms").onclick = () => {
+  alarms = [];
+  renderAlarms();
+};
+
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+
+</body>
+</html>
